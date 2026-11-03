@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { getJson } from '../api/client.js';
 import { CapabilityCard } from './CapabilityCard.js';
 
 type Props<T> = {
   title: string;
   description: string;
-  path: string;
-  responseKey: string;
+  loadItems: () => Promise<T[]>;
   emptyText: string;
   renderItem: (item: T, index: number) => ReactNode;
 };
@@ -17,7 +15,7 @@ type ListState<T> =
   | { status: 'success'; items: T[] }
   | { status: 'error' };
 
-export function CapabilityList<T>({ title, description, path, responseKey, emptyText, renderItem }: Props<T>) {
+export function CapabilityList<T>({ title, description, loadItems, emptyText, renderItem }: Props<T>) {
   const [state, setState] = useState<ListState<T>>({ status: 'loading' });
 
   useEffect(() => {
@@ -25,8 +23,7 @@ export function CapabilityList<T>({ title, description, path, responseKey, empty
     setState({ status: 'loading' });
     async function load() {
       try {
-        const response = await getJson<Record<string, T[]>>(path);
-        const items = response[responseKey];
+        const items = await loadItems();
         if (!Array.isArray(items)) throw new Error('Invalid list response');
         if (active) setState({ status: 'success', items });
       } catch {
@@ -35,7 +32,7 @@ export function CapabilityList<T>({ title, description, path, responseKey, empty
     }
     void load();
     return () => { active = false; };
-  }, [path, responseKey]);
+  }, [loadItems]);
 
   return (
     <CapabilityCard title={title} description={description}>

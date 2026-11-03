@@ -1,3 +1,4 @@
+import { getJson } from '../api/client.js';
 import { CapabilityList } from './CapabilityList.js';
 
 type WorkoutSuggestion = {
@@ -9,14 +10,21 @@ type WorkoutSuggestion = {
   difficulty?: string;
 };
 
+const userEmail = 'mona@example.com';
+
+async function loadSuggestions() {
+  const response = await getJson<{ suggestions: WorkoutSuggestion[] }>(
+    `/api/workouts/suggestions/${encodeURIComponent(userEmail)}`,
+  );
+  return response.suggestions;
+}
+
 export default function Workouts() {
-  const userEmail = 'mona@example.com';
   return (
     <CapabilityList<WorkoutSuggestion>
       title="Workout suggestions"
       description={`Recommend workouts from activity patterns for ${userEmail}.`}
-      path={`/api/workouts/suggestions/${encodeURIComponent(userEmail)}`}
-      responseKey="suggestions"
+      loadItems={loadSuggestions}
       emptyText="No workout suggestions yet."
       renderItem={(workout, index) => (
         <li className="list-group-item" key={workout._id ?? index}>
