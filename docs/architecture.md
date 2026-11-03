@@ -33,17 +33,26 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 - Data tier decision: Use Mongoose models as the source of schema validation and references. Require the contract fields for users, teams, activities, and workouts; default team members to an empty array, and preserve the seed script's idempotence and unrelated records.
 - Activity tracking approach: Accept a user's and team's IDs, activity type, and positive minutes; verify both referenced records exist before saving. Compute points as one point per minute and set `occurredAt` when the activity is created. Keep listing and creation responses in the API contract's shapes.
 - Team management approach: Reject a missing or blank name with `400`. Create and list teams with their submitted name and mascot, and retain valid member IDs without requiring a member to already have a team.
-- Leaderboard approach: Aggregate activity points by team, include teams with no activity at zero points, sort by total points descending, and assign 1-based ranks in the response.
-- Workout suggestions approach: Find the user by email, consider recent activity alongside their fitness goal, and put the best matching available workout first with a reason tied to the user's goal or activity. Return a 4xx when no user matches.
+- Leaderboard approach: Aggregate activity points by team, include teams with no activity at zero points, sort by total points descending (then team name for ties), and assign 1-based ranks in the response.
+- Workout suggestions approach: Find the user by email and inspect their latest ten activities. Prefer the latest recognized activity's focus (run/cycle/walk for endurance, strength for strength, yoga/stretch for mobility); otherwise use their fitness goal. Put matching workouts first with a reason tied to that activity or goal, followed by other workouts for variety. Return `404` when no user matches.
 
 ## Test plan
 
 Run the focused contract tests after each tier is implemented, then run both builds. A failing data contract points to model validation/defaults or seed behavior; a failing API contract points to service behavior, persistence, or response/status contracts; a failing frontend contract points to rendering, API integration, or accessible request states. A build failure indicates a TypeScript or production-bundling problem even if contract tests pass.
+
+The results below record the initial baseline, before implementation.
 
 - `npm run test:data --prefix octofit-tracker/backend` — **4 failed, 1 passed.** User, team, activity, and workout required-field validations are missing; the idempotent seed contract passes.
 - `npm run test:api --prefix octofit-tracker/backend` — **4 failed.** Invalid activity/team payloads return `501` instead of `400`, the leaderboard is empty, and the first workout suggestion does not match the user's activity/goal.
 - `npm test --prefix octofit-tracker/frontend` — **15 failed.** Capability data is not rendered as required, and loading, empty, and API error states are missing or inaccessible.
 - `npm run build --prefix octofit-tracker/backend` — **passed.**
 - `npm run build --prefix octofit-tracker/frontend` — **passed.**
+
+After implementing the data models and API services:
+
+- Each of the four API contracts passed individually using `npm run test:api --prefix octofit-tracker/backend -- -t "<test name>"`.
+- `npm test --prefix octofit-tracker/backend` — **13 passed:** 5 data contracts, 4 API contracts, and 4 additional API edge-case tests. The original contract tests are unchanged.
+- `npm run build --prefix octofit-tracker/backend` — **passed.**
+- Frontend tests and implementation remain unchanged in this backend-only iteration.
 
 Implementation order: fix and rerun the data contracts first; implement and rerun the API contracts against those models second; then implement and rerun the presentation contracts. Finish by rerunning both builds and all three test commands together.
