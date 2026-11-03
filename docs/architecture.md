@@ -55,4 +55,17 @@ After implementing the data models and API services:
 - `npm run build --prefix octofit-tracker/backend` — **passed.**
 - Frontend tests and implementation remain unchanged in this backend-only iteration.
 
+First presentation iteration:
+
+- The activities page uses the shared API client to list activity types, minutes, and points, with accessible loading and error messages and an explicit empty state. Other capability pages retain their placeholders.
+- `npm test --prefix octofit-tracker/frontend -- -t 'renders activity data from the API|/activities'` — **4 passed, 11 skipped.** Covers activity rendering, loading, empty, and HTTP error states.
+- `npm run build --prefix octofit-tracker/frontend` — **passed.**
+
+Complete presentation iteration:
+
+- Activities, teams, leaderboard, and workout suggestions share list request handling through the existing API client. Every page displays accessible loading and error messages, an explicit empty state, and its API data on success.
+- Workout suggestions request `/api/workouts/suggestions/mona%40example.com` for the seeded Mona user and show recommendation reasons.
+- `npm test --prefix octofit-tracker/frontend` — **23 passed:** all 15 original contracts plus network failure and malformed list response checks for each route.
+- `npm run build --prefix octofit-tracker/frontend` — **passed.**
+
 Implementation order: fix and rerun the data contracts first; implement and rerun the API contracts against those models second; then implement and rerun the presentation contracts. Finish by rerunning both builds and all three test commands together.
